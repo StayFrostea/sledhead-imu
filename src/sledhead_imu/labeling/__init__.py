@@ -1,0 +1,1 @@
+"""Label attachment and merging."""

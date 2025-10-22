@@ -1,0 +1,8 @@
+{
+  "recommendations": [
+    "ms-python.python",
+    "charliermarsh.ruff",
+    "ms-toolsai.jupyter",
+    "github.vscode-pull-request-github"
+  ]
+}

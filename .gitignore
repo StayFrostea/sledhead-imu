@@ -1,0 +1,19 @@
+# virtual envs
+.venv/
+.env
+# python
+__pycache__/
+*.pyc
+# notebooks
+*.ipynb_checkpoints/
+# data
+data/**/*
+!data/README.md
+# allow tiny samples
+!data/00_collect/imu/sample_*.parquet
+!data/00_collect/symptoms/sample_*.csv
+# artifacts
+outputs/
+models/
+# OS
+.DS_Store

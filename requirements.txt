@@ -1,0 +1,12 @@
+numpy
+pandas
+scipy
+scikit-learn
+matplotlib
+jupyter
+typer
+pyyaml
+pyarrow
+polars==1.6.0 ; python_version >= "3.11"
+torch ; platform_system != "Darwin" or platform_machine != "arm64"
+tensorflow ; platform_system == "Darwin" and platform_machine == "arm64"

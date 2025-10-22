@@ -1,0 +1,8 @@
+{
+  "python.defaultInterpreterPath": "${workspaceFolder}/.venv/bin/python",
+  "python.formatting.provider": "black",
+  "editor.formatOnSave": true,
+  "editor.rulers": [100],
+  "ruff.lint.args": ["--fix"],
+  "notebook.output.textLineLimit": 5000
+}

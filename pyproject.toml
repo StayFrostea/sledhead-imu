@@ -1,0 +1,19 @@
+[project]
+name = "sledhead-imu"
+version = "0.1.0"
+description = "Sled-Head IMU processing pipeline: ingest → filtering → ≥2g exposure → labels → model-ready → train/validate."
+requires-python = ">=3.11,<3.14"
+readme = "README.md"
+
+[tool.black]
+line-length = 100
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+extend-select = ["I", "E", "F", "B"]
+ignore = []
+
+[tool.pytest.ini_options]
+addopts = "-q"
+testpaths = ["tests"]
