@@ -7,12 +7,17 @@ def attach_labels(imu_df: pd.DataFrame, symptoms_df: pd.DataFrame) -> pd.DataFra
     """Attach symptom labels to IMU data.
 
     Args:
-        imu_df: IMU data with athlete_id and timestamp
+        imu_df: IMU data with athlete_id and timestamp (or date)
         symptoms_df: Symptom data with athlete_id, timestamp, and symptom flags
 
     Returns:
         Merged DataFrame with labels
     """
+    # Handle date column by converting to timestamp
+    if "date" in imu_df.columns and "timestamp" not in imu_df.columns:
+        imu_df = imu_df.copy()
+        imu_df["timestamp"] = pd.to_datetime(imu_df["date"])
+    
     # Check if timestamp columns exist
     if "timestamp" not in imu_df.columns or "timestamp" not in symptoms_df.columns:
         print("Warning: No timestamp columns found. Merging on athlete_id only.")

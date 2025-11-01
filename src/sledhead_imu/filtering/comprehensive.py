@@ -63,3 +63,4 @@ def apply_filtering_pipeline(
     
     print("Filtering pipeline complete!")
     return df_final
+

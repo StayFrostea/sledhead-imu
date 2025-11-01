@@ -12,6 +12,7 @@ src/sledhead_imu/alerts/generate_alerts.py
 src/sledhead_imu/alerts/thresholds.py
 src/sledhead_imu/features/__init__.py
 src/sledhead_imu/features/exposure_2g.py
+src/sledhead_imu/features/random_forest_features.py
 src/sledhead_imu/filtering/__init__.py
 src/sledhead_imu/filtering/comprehensive.py
 src/sledhead_imu/filtering/high_pass.py
@@ -45,6 +46,7 @@ src/sledhead_imu/validate/__init__.py
 src/sledhead_imu/validate/metrics.py
 src/sledhead_imu/validate/validate_cutoffs.py
 tests/test_features_exposure_2g.py
+tests/test_features_random_forest.py
 tests/test_filtering.py
 tests/test_prep_split.py
 tests/test_segmentation.py

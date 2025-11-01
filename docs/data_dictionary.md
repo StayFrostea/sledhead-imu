@@ -8,10 +8,11 @@
 - **`timestamp`**: UTC ISO8601 - Timestamp of the measurement
 
 ### IMU Data
-- **`g_x`**: float - Acceleration in X-axis (m/s²)
-- **`g_y`**: float - Acceleration in Y-axis (m/s²)  
-- **`g_z`**: float - Acceleration in Z-axis (m/s²)
-- **`g_mag`**: float - Magnitude of acceleration vector (m/s²)
+- **`g_x`**: float - Acceleration in X-axis (g units)
+- **`g_y`**: float - Acceleration in Y-axis (g units)  
+- **`g_z`**: float - Acceleration in Z-axis (g units)
+- **`g_mag`**: float - Magnitude of acceleration vector (g units)
+- **Note**: Values are already normalized to standard gravity (1g = 9.80665 m/s²)
 
 ### Symptom Data
 - **`symptom_flags`**: binary or categorical - Symptom indicators after merge
