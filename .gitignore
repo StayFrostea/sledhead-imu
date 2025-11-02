@@ -14,6 +14,7 @@ data/**/*
 !data/00_collect/symptoms/sample_*.csv
 # artifacts
 outputs/
-models/
+data/*/models/
+data/*/*/models/
 # OS
 .DS_Store
