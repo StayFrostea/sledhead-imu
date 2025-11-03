@@ -54,6 +54,18 @@ def normalize_imu_data(df: pd.DataFrame, config: Dict[str, Any]) -> pd.DataFrame
     # Rename columns to standard format
     df = df.rename(columns={'x': 'g_x', 'y': 'g_y', 'z': 'g_z'})
     
+    # Handle 'Number of Symptoms' column (may have trailing space)
+    symptom_col = None
+    for col in df.columns:
+        if 'Number of Symptoms' in col:
+            symptom_col = col
+            break
+    
+    if symptom_col:
+        df = df.rename(columns={symptom_col: 'num_symptoms'})
+        # Forward fill to propagate the value to all rows in the run
+        df['num_symptoms'] = df['num_symptoms'].ffill().fillna(0)
+    
     # Calculate magnitude if not already present
     if 'g_mag' not in df.columns:
         df['g_mag'] = (df['g_x']**2 + df['g_y']**2 + df['g_z']**2)**0.5
