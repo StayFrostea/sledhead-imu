@@ -17,6 +17,10 @@ def normalize_imu_data(df: pd.DataFrame, config: Dict[str, Any]) -> pd.DataFrame
     df = df.copy()
     
     # Handle acceleration data - prioritize x/y/z (already in g) over accx/accy/accz (m/s²)
+    # First, normalize column names (handle 'x acc', 'y acc', etc.)
+    if 'x acc' in df.columns and 'y acc' in df.columns and 'z acc' in df.columns:
+        df = df.rename(columns={'x acc': 'x', 'y acc': 'y', 'z acc': 'z'})
+    
     if 'x' in df.columns and 'y' in df.columns and 'z' in df.columns:
         # Already in g units
         pass
