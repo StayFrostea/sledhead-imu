@@ -72,10 +72,23 @@ if 'num_symptoms' in features_df.columns:
     # Binary classification: 0-1 symptoms = 0, 2+ symptoms = 1
     y = (num_symptoms >= 2).astype(int)
     
-    print(f"\nBinary label distribution:")
-    print(y.value_counts().sort_index())
-    print(f"\n  Label 0 (0-1 symptoms): {(y == 0).sum()} runs")
-    print(f"  Label 1 (2+ symptoms): {(y == 1).sum()} runs")
+    # Check if we have both classes
+    unique_labels = y.unique()
+    if len(unique_labels) < 2:
+        # All runs have same label, need fallback
+        print(f"⚠️  All runs have {(y == 0).sum()} symptom(s). Using synthetic labels for binary classification.")
+        highest_peak = features_df['highest_peak_g']
+        median_peak = highest_peak.median()
+        y = (highest_peak > median_peak).astype(int)
+        print(f"\nBinary label distribution (synthetic based on peak G):")
+        print(y.value_counts().sort_index())
+        print(f"\n  Label 0 (≤{median_peak:.2f}g): {(y == 0).sum()} runs")
+        print(f"  Label 1 (>{median_peak:.2f}g): {(y == 1).sum()} runs")
+    else:
+        print(f"\nBinary label distribution:")
+        print(y.value_counts().sort_index())
+        print(f"\n  Label 0 (0-1 symptoms): {(y == 0).sum()} runs")
+        print(f"  Label 1 (2+ symptoms): {(y == 1).sum()} runs")
 else:
     # Fallback: Use highest_peak_g to create synthetic binary labels
     highest_peak = features_df['highest_peak_g']
