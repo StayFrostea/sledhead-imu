@@ -48,6 +48,20 @@ for xlsx_file in xlsx_files:
         
         df = pd.DataFrame(data, columns=headers)
         
+        # Remove empty columns (columns with all NaN/None or empty names)
+        # Check for columns with empty names or all null values
+        cols_to_drop = []
+        for col in df.columns:
+            # Drop if column name is empty/None or if all values are NaN/None/empty
+            if pd.isna(col) or str(col).strip() == '' or str(col).strip() == 'nan':
+                cols_to_drop.append(col)
+            elif df[col].isna().all() or (df[col].astype(str).str.strip() == '').all():
+                cols_to_drop.append(col)
+        
+        if cols_to_drop:
+            df = df.drop(columns=cols_to_drop)
+            print(f"  → Removed {len(cols_to_drop)} empty column(s)")
+        
         csv_file = xlsx_file.with_suffix('.csv')
         df.to_csv(csv_file, index=False)
         converted += 1
