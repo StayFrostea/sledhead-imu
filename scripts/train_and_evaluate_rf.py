@@ -47,10 +47,23 @@ if isinstance(y_val, pd.DataFrame):
 if isinstance(y_test, pd.DataFrame):
     y_test = y_test.iloc[:, 0]
 
+# Check if binary classification
+unique_labels = sorted(pd.concat([y_train, y_val, y_test]).unique())
+is_binary = len(unique_labels) == 2 and set(unique_labels) == {0, 1}
+
+# Label mapping
+if is_binary:
+    label_map = {0: 'No Symptoms', 1: 'Symptoms'}
+    label_name = 'Symptom Status'
+else:
+    label_map = {i: f'Severity {i}' for i in range(6)}
+    label_name = 'Severity'
+
 print(f"\nLoaded splits:")
 print(f"  Train: {X_train.shape}")
 print(f"  Val: {X_val.shape}")
 print(f"  Test: {X_test.shape}")
+print(f"\nClassification type: {'Binary (Symptoms/No Symptoms)' if is_binary else 'Multi-class (Severity 0-5)'}")
 
 # Train model
 print("\n" + "="*80)
@@ -135,10 +148,15 @@ print(f"\n✓ Saved: feature_importance.png")
 plt.close()
 
 # 2. Confusion Matrix Heatmap
-plt.figure(figsize=(10, 8))
-sns.heatmap(cm, annot=True, fmt='d', cmap='Blues', cbar=True)
-plt.xlabel('Predicted Severity')
-plt.ylabel('Actual Severity')
+plt.figure(figsize=(8, 6) if is_binary else (10, 8))
+if is_binary:
+    labels = [label_map[0], label_map[1]]
+    sns.heatmap(cm, annot=True, fmt='d', cmap='Blues', cbar=True,
+                xticklabels=labels, yticklabels=labels)
+else:
+    sns.heatmap(cm, annot=True, fmt='d', cmap='Blues', cbar=True)
+plt.xlabel(f'Predicted {label_name}')
+plt.ylabel(f'Actual {label_name}')
 plt.title('Confusion Matrix (Test Set)')
 plt.tight_layout()
 plt.savefig(output_dir / 'confusion_matrix.png', dpi=150, bbox_inches='tight')
@@ -146,7 +164,7 @@ print(f"✓ Saved: confusion_matrix.png")
 plt.close()
 
 # 3. Per-Class Metrics Bar Chart
-plt.figure(figsize=(12, 6))
+plt.figure(figsize=(8, 6) if is_binary else (12, 6))
 x_pos = np.arange(len(per_class))
 width = 0.25
 
@@ -154,10 +172,13 @@ plt.bar(x_pos - width, per_class['precision'], width, label='Precision', alpha=0
 plt.bar(x_pos, per_class['recall'], width, label='Recall', alpha=0.8)
 plt.bar(x_pos + width, per_class['f1'], width, label='F1 Score', alpha=0.8)
 
-plt.xlabel('Severity Class')
+plt.xlabel(label_name)
 plt.ylabel('Score')
 plt.title('Per-Class Performance Metrics (Test Set)')
-plt.xticks(x_pos, [f"Severity {c}" for c in per_class['class']])
+if is_binary:
+    plt.xticks(x_pos, [label_map[int(c)] for c in per_class['class']])
+else:
+    plt.xticks(x_pos, [f"Severity {c}" for c in per_class['class']])
 plt.legend()
 plt.grid(axis='y', alpha=0.3)
 plt.ylim([0, 1.1])
@@ -167,12 +188,19 @@ print(f"✓ Saved: per_class_metrics.png")
 plt.close()
 
 # 4. Class Distribution
-plt.figure(figsize=(10, 6))
-severity_counts = pd.Series(test_results['predictions']).value_counts().sort_index()
-plt.bar(severity_counts.index, severity_counts.values, alpha=0.7)
-plt.xlabel('Severity')
+plt.figure(figsize=(8, 6) if is_binary else (10, 6))
+pred_counts = pd.Series(test_results['predictions']).value_counts().sort_index()
+if is_binary:
+    labels = [label_map[i] for i in pred_counts.index]
+    colors = ['#2ecc71', '#e74c3c']
+    plt.bar(range(len(pred_counts)), pred_counts.values, alpha=0.7, color=colors)
+    plt.xticks(range(len(pred_counts)), labels, rotation=45, ha='right')
+else:
+    plt.bar(pred_counts.index, pred_counts.values, alpha=0.7)
+    plt.xlabel(label_name)
 plt.ylabel('Count')
-plt.title('Predicted Severity Distribution (Test Set)')
+title_label = 'Symptom Status' if is_binary else 'Severity'
+plt.title(f'Predicted {title_label} Distribution (Test Set)')
 plt.grid(axis='y', alpha=0.3)
 plt.tight_layout()
 plt.savefig(output_dir / 'severity_distribution.png', dpi=150, bbox_inches='tight')

@@ -109,22 +109,50 @@ X = features_df.drop(columns=['athlete_id', 'run_id', 'num_symptoms'], errors='i
 
 print(f"\n✓ X: {X.shape}, y: {y.shape}")
 
-# Step 5: Train/test split
+# Step 5: Train/val/test split (60/20/20)
 if len(X) > 3:
     try:
-        X_train, X_test, y_train, y_test = train_test_split(
-            X, y, test_size=0.33, random_state=42, stratify=y
+        # First split: train+val vs test (80/20)
+        X_train_val, X_test, y_train_val, y_test = train_test_split(
+            X, y, test_size=0.2, random_state=42, stratify=y
         )
-        print(f"\n✓ Split: Train={len(X_train)}, Test={len(X_test)}")
+        # Second split: train vs val (75/25 of remaining 80% = 60/20 overall)
+        X_train, X_val, y_train, y_val = train_test_split(
+            X_train_val, y_train_val, test_size=0.25, random_state=42, stratify=y_train_val
+        )
+        print(f"\n✓ Split: Train={len(X_train)}, Val={len(X_val)}, Test={len(X_test)}")
     except ValueError:
         # Not enough samples per class for stratification
-        X_train, X_test, y_train, y_test = train_test_split(
-            X, y, test_size=0.33, random_state=42
+        X_train_val, X_test, y_train_val, y_test = train_test_split(
+            X, y, test_size=0.2, random_state=42
         )
-        print(f"\n✓ Split (no stratification): Train={len(X_train)}, Test={len(X_test)}")
+        X_train, X_val, y_train, y_val = train_test_split(
+            X_train_val, y_train_val, test_size=0.25, random_state=42
+        )
+        print(f"\n✓ Split (no stratification): Train={len(X_train)}, Val={len(X_val)}, Test={len(X_test)}")
+    
+    # Save splits to 09_splits/ for evaluation scripts
+    splits_dir = Path('data/09_splits')
+    splits_dir.mkdir(parents=True, exist_ok=True)
+    for split_name, X_split, y_split in [
+        ('train', X_train, y_train),
+        ('val', X_val, y_val),
+        ('test', X_test, y_test)
+    ]:
+        split_dir = splits_dir / split_name
+        split_dir.mkdir(exist_ok=True)
+        X_split.to_csv(split_dir / f'X_{split_name}.csv', index=False)
+        # Convert y to DataFrame with column name
+        if isinstance(y_split, pd.Series):
+            y_df = pd.DataFrame({y_split.name if y_split.name else 'label': y_split})
+        else:
+            y_df = y_split
+        y_df.to_csv(split_dir / f'y_{split_name}.csv', index=False)
+    print(f"✓ Saved splits to data/09_splits/")
 else:
     print("⚠️  Not enough samples for train/test split. Using all for training.")
-    X_train, X_test, y_train, y_test = X, X, y, y
+    X_train, X_val, X_test = X, X, X
+    y_train, y_val, y_test = y, y, y
 
 # Step 6: Train
 print("\n" + "="*80)
@@ -139,17 +167,19 @@ config = {
     'random_state': 42
 }
 
-model = train_random_forest(X_train, y_train, X_test, y_test, config)
+model = train_random_forest(X_train, y_train, X_val, y_val, config)
 print("✓ Model trained")
 
 # Step 7: Evaluate
 train_results = evaluate_random_forest(model, X_train, y_train)
+val_results = evaluate_random_forest(model, X_val, y_val)
 test_results = evaluate_random_forest(model, X_test, y_test)
 
 print("\n" + "="*80)
 print("RESULTS")
 print("="*80)
 print(f"Train Accuracy: {train_results['accuracy']:.3f}")
+print(f"Val Accuracy: {val_results['accuracy']:.3f}")
 print(f"Test Accuracy: {test_results['accuracy']:.3f}")
 
 print(f"\nTop Features:")

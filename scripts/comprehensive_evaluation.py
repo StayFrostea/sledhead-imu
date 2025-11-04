@@ -56,6 +56,18 @@ train_results = evaluate_random_forest(model, X_train, y_train)
 val_results = evaluate_random_forest(model, X_val, y_val)
 test_results = evaluate_random_forest(model, X_test, y_test)
 
+# Check if binary classification
+unique_labels = sorted(pd.concat([y_train, y_val, y_test]).unique())
+is_binary = len(unique_labels) == 2 and set(unique_labels) == {0, 1}
+
+# Label mapping
+if is_binary:
+    label_map = {0: 'No Symptoms', 1: 'Symptoms'}
+    label_name = 'Symptom Status'
+else:
+    label_map = {i: f'Severity {i}' for i in range(6)}
+    label_name = 'Severity'
+
 # Output directory
 output_dir = Path('data/10_models/rf/evaluations')
 output_dir.mkdir(parents=True, exist_ok=True)
@@ -64,8 +76,14 @@ output_dir.mkdir(parents=True, exist_ok=True)
 fig, axes = plt.subplots(1, 3, figsize=(15, 5))
 for idx, (split_name, y_data) in enumerate([('Train', y_train), ('Val', y_val), ('Test', y_test)]):
     counts = pd.Series(y_data).value_counts().sort_index()
-    axes[idx].bar(counts.index, counts.values, alpha=0.7)
-    axes[idx].set_xlabel('Severity')
+    if is_binary:
+        labels = [label_map[i] for i in counts.index]
+        axes[idx].bar(range(len(counts)), counts.values, alpha=0.7, color=['#2ecc71', '#e74c3c'])
+        axes[idx].set_xticks(range(len(counts)))
+        axes[idx].set_xticklabels(labels, rotation=45, ha='right')
+    else:
+        axes[idx].bar(counts.index, counts.values, alpha=0.7)
+        axes[idx].set_xlabel(label_name)
     axes[idx].set_ylabel('Count')
     axes[idx].set_title(f'{split_name} Set')
     axes[idx].grid(axis='y', alpha=0.3)
@@ -116,9 +134,14 @@ for idx, (split_name, y_actual, results) in enumerate([
     y_pred = results['predictions']
     axes[idx].scatter(y_actual, y_pred, alpha=0.6)
     axes[idx].plot([y_actual.min(), y_actual.max()], [y_actual.min(), y_actual.max()], 'r--', lw=2)
-    axes[idx].set_xlabel('Actual Severity')
-    axes[idx].set_ylabel('Predicted Severity')
+    axes[idx].set_xlabel(f'Actual {label_name}')
+    axes[idx].set_ylabel(f'Predicted {label_name}')
     axes[idx].set_title(f'{split_name}')
+    if is_binary:
+        axes[idx].set_xticks([0, 1])
+        axes[idx].set_xticklabels([label_map[0], label_map[1]])
+        axes[idx].set_yticks([0, 1])
+        axes[idx].set_yticklabels([label_map[0], label_map[1]])
     axes[idx].grid(alpha=0.3)
 plt.tight_layout()
 plt.savefig(output_dir / 'predictions_vs_actual.png', dpi=150, bbox_inches='tight')
@@ -150,10 +173,15 @@ plt.close()
 from sklearn.metrics import confusion_matrix
 cm = confusion_matrix(y_test, test_results['predictions'])
 
-fig, ax = plt.subplots(figsize=(10, 8))
-sns.heatmap(cm, annot=True, fmt='d', cmap='Blues', cbar=True, ax=ax,
-            xticklabels=[f'Severity {i}' for i in range(6)],
-            yticklabels=[f'Severity {i}' for i in range(6)])
+fig, ax = plt.subplots(figsize=(10, 8) if not is_binary else (8, 6))
+if is_binary:
+    labels = [label_map[0], label_map[1]]
+    sns.heatmap(cm, annot=True, fmt='d', cmap='Blues', cbar=True, ax=ax,
+                xticklabels=labels, yticklabels=labels)
+else:
+    sns.heatmap(cm, annot=True, fmt='d', cmap='Blues', cbar=True, ax=ax,
+                xticklabels=[f'Severity {i}' for i in range(6)],
+                yticklabels=[f'Severity {i}' for i in range(6)])
 ax.set_xlabel('Predicted')
 ax.set_ylabel('Actual')
 ax.set_title('Confusion Matrix - Test Set')
@@ -165,7 +193,7 @@ plt.close()
 # 7. Per-Class Precision, Recall, F1
 per_class = validate_per_class_performance(y_test, test_results['predictions'])
 
-fig, ax = plt.subplots(figsize=(12, 6))
+fig, ax = plt.subplots(figsize=(12, 6) if not is_binary else (8, 6))
 x_pos = np.arange(len(per_class))
 width = 0.25
 
@@ -173,11 +201,14 @@ ax.bar(x_pos - width, per_class['precision'], width, label='Precision', alpha=0.
 ax.bar(x_pos, per_class['recall'], width, label='Recall', alpha=0.8, color='#2ecc71')
 ax.bar(x_pos + width, per_class['f1'], width, label='F1 Score', alpha=0.8, color='#e74c3c')
 
-ax.set_xlabel('Severity Class')
+ax.set_xlabel(label_name)
 ax.set_ylabel('Score')
 ax.set_title('Per-Class Performance Metrics (Test Set)')
 ax.set_xticks(x_pos)
-ax.set_xticklabels([f"Severity {c}" for c in per_class['class']])
+if is_binary:
+    ax.set_xticklabels([label_map[int(c)] for c in per_class['class']])
+else:
+    ax.set_xticklabels([f"Severity {c}" for c in per_class['class']])
 ax.legend()
 ax.grid(axis='y', alpha=0.3)
 ax.set_ylim([0, 1.1])
